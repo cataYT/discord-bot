@@ -19,11 +19,9 @@ client.once(Events.ClientReady, readyClient => {
     client.user.setActivity("MONEY!!!!", { type: ActivityType.Playing, state: "🤑" })
 });
 
-client.on(Events.MessageCreate, (message) => {
+client.on(Events.MessageCreate, async (message) => {
     if (message.author.id === "600677384689025026") {
-        if (message.content.startsWith("$echo")) {
-            message.channel.send(message.content.slice(6));
-        } else if (message.content.startsWith("$exec")) {
+        if (message.content.startsWith("$exec")) {
             exec(message.content.slice(6), (error, stdout, stderr) => {
                 if (error) {
                   message.channel.send(`${error}`);
@@ -36,17 +34,34 @@ client.on(Events.MessageCreate, (message) => {
                     message.channel.send(`Command Error:\n${stderr}`);
                 }
             });
-        } else if (message.content.startsWith("$channelCreate")) {
-            additionalFunctions.createChannel(message.content.slice(15), "1119538529450594314").then(()=> {
-                message.channel.send("Created channel successfully!")
-            }).catch((error) => {
-                message.channel.send(`Error creating channel: ${error}`)
-            })
-        } else if (message.content.startsWith("$channelDelete")) {
-            additionalFunctions.deleteChannel(message.content.slice(15));
+        } else if (message.content.startsWith("$createChannel")) {
+            await additionalFunctions.createChannel(`${message.content.slice(15)}`, "904732937738657863", message.channelId)
+        } else if (message.content.startsWith("$deleteChannel")) {
+            await additionalFunctions.deleteChannel(message.content.slice(15))
+        } else if (message.content.startsWith("$echo")) {
+            message.channel.send(message.content.slice(6));
+        } else if (message.content.startsWith("$reply")) {
+            const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
+            await additionalFunctions.replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+        } else if (message.content.startsWith("$rng")) {
+            const parts = message.content.match(/\d+/g);
+            if (parts && parts.length == 2) {
+                const min = parseInt(parts[0]);
+                const max = parseInt(parts[1]);
+                if (!isNaN(min) && !isNaN(max)) {
+                    message.channel.send(`${Math.floor(Math.random() * (max - min + 1)) + min}`);
+                } else {
+                    message.channel.send("Invalid range. Please provide two valid numbers.");
+                }
+            } else {
+                message.channel.send("Invalid input format. Please provide a range in the format 'min, max'.");
+            }
         }
-    } else {
-        return
+    } else if (message.content.startsWith("$echo")) {
+        message.channel.send(message.content.slice(6));
+    } else if (message.content.startsWith("$reply")) {
+        const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
+        await additionalFunctions.replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
     }
 });
 
@@ -85,6 +100,10 @@ client.on(Events.MessageReactionAdd, (reaction, user) => {
 client.on(Events.MessageReactionRemove, (reaction, user) => {
     reaction.message.channel.send(`Reaction removed by ${user}: ${reaction.emoji.name}`);
     console.log("removed reaction")
+})
+
+client.on(Events.ShardDisconnect, (event) => {
+    console.log(`Shard ${event.shardId} disconnected.`);
 })
 
 client.login(token);

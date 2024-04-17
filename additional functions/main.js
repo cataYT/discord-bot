@@ -16,11 +16,11 @@ function getWebhook(serverID) {
     return resp.json();
   })
   .then((data) => {
+    console.log("got webhook successfully");
     return data;
   })
   .catch((err) => {
     console.error("Error fetching webhook:", err);
-    throw err;
   });
 };
 
@@ -39,10 +39,10 @@ function createWebhook(name="Captain Hook", channelID) {
     }
     return resp.json();
   }).then((data) => {
+    console.log("created webhook successfully");
     return data;
   }).catch((err) => {
     console.error("Error creating webhook:", err);
-    throw err;
   });
 };
 
@@ -58,10 +58,10 @@ function deleteWebhook(webhookID) {
     }
     return resp.json();
   }).then((data) => {
+    console.log("deleted webhook successfully");
     return data;
   }).catch((err) => {
     console.error("Error deleting webhook:", err);
-    throw err;
   });
 };
 
@@ -81,10 +81,10 @@ function sendMessage(channelID, message) {
     }
     return resp.json();
   }).then((data) => {
+    console.log("sent message successfully");
     return data;
   }).catch((err) => {
     console.error("Error sending message:", err);
-    throw err;
   })
 }
 
@@ -100,41 +100,45 @@ function deleteMessage(messageID, channelID) {
     }
     return resp.json();
   }).then((data) => {
+    console.log("deleted message sucessfully");
     return data;
   }).catch((err) => {
-    throw err;
+    console.error(err);
   })
 }
 
-function createChannel(name, serverID, parentID=null) {
+function createChannel(name, serverID, type=0, parentID=null) {
   return fetch(`${BASE_URL}/guilds/${serverID}/channels`, {
     "headers": {
-      "authorization": token
+      "authorization": token,
+      "content-type": "application/json"
     },
     "body": JSON.stringify({
-      "type": 0,
+      "type": type,
       "name": name,
-      "permission_overwrites": [],
       "parent_id": parentID
     }),
     "method": "POST"
   }).then((resp) => {
     if (!resp.ok) {
-      throw new Error("Network response was not ok while creating channel");
+      throw new Error("response not ok")
     }
     return resp.json();
   }).then((data) => {
+    console.log("created channel successfully")
     return data;
   }).catch((err) => {
-    throw err;
+    console.error(err);
   })
 }
 
 function deleteChannel(channelID) {
   return fetch(`${BASE_URL}/channels/${channelID}`, {
     "headers": {
-      "authorization": token
+      "authorization": token,
+      "content-type": "application/json"
     },
+    "body": null,
     "method": "DELETE"
   }).then((resp) => {
     if (!resp.ok) {
@@ -142,9 +146,10 @@ function deleteChannel(channelID) {
     }
     return resp.json();
   }).then((data) => {
+    console.log("deleted channel successfully");
     return data;
   }).catch((err) => {
-    throw err;
+    console.error(err);
   })
 }
 
