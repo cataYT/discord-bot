@@ -1,8 +1,10 @@
-const { Client, Events, GatewayIntentBits, ActivityType } = require('discord.js');
+const { Client, Events, GatewayIntentBits, ActivityType } = require("discord.js");
 const { token } = require('./config.json');
 const { exec } = require('child_process');
 
-const additionalFunctions = require('./additional functions/main.js');
+const { $exec, $rng } = require("./bot_functions.js")
+
+const { createChannel, deleteChannel, replyMessage }  = require('./additional functions/main.js');
 
 const client = new Client({
     intents: [
@@ -22,46 +24,26 @@ client.once(Events.ClientReady, readyClient => {
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.id === "600677384689025026") {
         if (message.content.startsWith("$exec")) {
-            exec(message.content.slice(6), (error, stdout, stderr) => {
-                if (error) {
-                  message.channel.send(`${error}`);
-                  return;
-                }
-                if (stdout) {
-                    message.channel.send(`Command result:\n${stdout}`);
-                }
-                if (stderr) {
-                    message.channel.send(`Command Error:\n${stderr}`);
-                }
-            });
+            $exec(message.content.slice(6))
         } else if (message.content.startsWith("$createChannel")) {
-            await additionalFunctions.createChannel(`${message.content.slice(15)}`, "904732937738657863", message.channelId)
+            await createChannel(`${message.content.slice(15)}`, "904732937738657863", message.channelId)
         } else if (message.content.startsWith("$deleteChannel")) {
-            await additionalFunctions.deleteChannel(message.content.slice(15))
+            await deleteChannel(message.content.slice(15))
         } else if (message.content.startsWith("$echo")) {
             message.channel.send(message.content.slice(6));
         } else if (message.content.startsWith("$reply")) {
             const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
-            await additionalFunctions.replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+            await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
         } else if (message.content.startsWith("$rng")) {
-            const parts = message.content.match(/\d+/g);
-            if (parts && parts.length == 2) {
-                const min = parseInt(parts[0]);
-                const max = parseInt(parts[1]);
-                if (!isNaN(min) && !isNaN(max)) {
-                    message.channel.send(`${Math.floor(Math.random() * (max - min + 1)) + min}`);
-                } else {
-                    message.channel.send("Invalid range. Please provide two valid numbers.");
-                }
-            } else {
-                message.channel.send("Invalid input format. Please provide a range in the format 'min, max'.");
-            }
+            $rng(message.content);
         }
     } else if (message.content.startsWith("$echo")) {
         message.channel.send(message.content.slice(6));
     } else if (message.content.startsWith("$reply")) {
         const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
-        await additionalFunctions.replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+        await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+    } else if (message.content.startsWith("$exec")) {
+        $exec(message.content.slice(6))
     }
 });
 
