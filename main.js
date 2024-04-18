@@ -20,21 +20,40 @@ client.once(Events.ClientReady, readyClient => {
     client.user.setActivity("MONEY!!!!", { type: ActivityType.Playing, state: "🤑" })
 });
 
+async function rng(message) {
+    const parts = message.content.match(/\d+/g);
+    if (parts && parts.length == 2) {
+        const min = parseInt(parts[0]);
+        const max = parseInt(parts[1]);
+        if (!isNaN(min) && !isNaN(max)) {
+            await message.channel.send(`${Math.floor(Math.random() * (max - min + 1)) + min}`);
+        } else {
+            await message.channel.send("Invalid range. Please provide two valid numbers.");
+        }
+    } else {
+        await message.channel.send("Invalid input format. Please provide a range in the format 'min, max'.");
+    }
+}
+
+async function exec_cmd(message) {
+    exec(message.content.slice(6), async (error, stdout, stderr) => {
+        if (error) {
+          await message.channel.send(`${error}`);
+          return;
+        }
+        if (stdout) {
+            await message.channel.send(`Command result:\n${stdout}`);
+        }
+        if (stderr) {
+            await message.channel.send(`Command Error:\n${stderr}`);
+        }
+    });
+}
+
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.id === "600677384689025026") {
         if (message.content.startsWith("$exec")) {
-            exec(message.content.slice(6), async (error, stdout, stderr) => {
-                if (error) {
-                  await message.channel.send(`${error}`);
-                  return;
-                }
-                if (stdout) {
-                    await message.channel.send(`Command result:\n${stdout}`);
-                }
-                if (stderr) {
-                    await message.channel.send(`Command Error:\n${stderr}`);
-                }
-            });
+            exec_cmd(message);
         } else if (message.content.startsWith("$createChannel")) {
             await createChannel(`${message.content.slice(15)}`, "904732937738657863", message.channelId)
         } else if (message.content.startsWith("$deleteChannel")) {
@@ -45,39 +64,17 @@ client.on(Events.MessageCreate, async (message) => {
             const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
             await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
         } else if (message.content.startsWith("$rng")) {
-            const parts = message.content.match(/\d+/g);
-            if (parts && parts.length == 2) {
-                const min = parseInt(parts[0]);
-                const max = parseInt(parts[1]);
-                if (!isNaN(min) && !isNaN(max)) {
-                    await message.channel.send(`${Math.floor(Math.random() * (max - min + 1)) + min}`);
-                } else {
-                    await message.channel.send("Invalid range. Please provide two valid numbers.");
-                }
-            } else {
-                await message.channel.send("Invalid input format. Please provide a range in the format 'min, max'.");
-            }
+            rng(message);
         }
     } else if (message.content.startsWith("$echo")) {
         message.channel.send(message.content.slice(6));
     } else if (message.content.startsWith("$reply")) {
         const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
         await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+    } else if (message.content.startsWith("$rng")) {
+        rng(message);
     } else if (message.content.startsWith("$exec")) {
-        if (message.content.startsWith("$exec")) {
-            exec(message.content.slice(6), async (error, stdout, stderr) => {
-                if (error) {
-                    await message.channel.send(`${error}`);
-                    return;
-                }
-                if (stdout) {
-                    await message.channel.send(`Command result:\n${stdout}`);
-                }
-                if (stderr) {
-                    await message.channel.send(`Command Error:\n${stderr}`);
-                }
-            })
-        }
+        exec_cmd(message);
     }
 })
 
