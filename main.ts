@@ -1,4 +1,6 @@
-const { Client, Events, GatewayIntentBits, ActivityType } = require("discord.js");
+import { Message, Client, User, MessageReaction, CloseEvent as DiscordCloseEvent } from "discord.js";
+
+const { Events, GatewayIntentBits, ActivityType } = require("discord.js");
 const { token } = require('./config.json');
 
 const { exec } = require('child_process');
@@ -15,12 +17,17 @@ const client = new Client({
     ],
 });
 
-client.once(Events.ClientReady, readyClient => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-    client.user.setActivity("MONEY!!!!", { type: ActivityType.Playing, state: "🤑" })
+client.once(Events.ReadyClient, (readyClient: Client) => {
+    if (readyClient) {
+        const user = readyClient.user;
+        if (user) {
+            console.log(`Ready! Logged in as ${user.tag}`);
+            user.setActivity("MONEY!!!!", { type: ActivityType.Playing, state: "🤑" })
+        }        
+    }
 });
 
-async function rng(message) {
+async function rng(message: Message) {
     const parts = message.content.match(/\d+/g);
     if (parts && parts.length == 2) {
         const min = parseInt(parts[0]);
@@ -35,8 +42,8 @@ async function rng(message) {
     }
 }
 
-async function exec_cmd(message) {
-    exec(message.content.slice(6), async (error, stdout, stderr) => {
+async function exec_cmd(message: Message) {
+    exec(message.content.slice(6), async (error: Error, stdout: string, stderr: Error) => {
         if (error) {
           await message.channel.send(`${error}`);
           return;
@@ -50,7 +57,7 @@ async function exec_cmd(message) {
     });
 }
 
-client.on(Events.MessageCreate, async (message) => {
+client.on(Events.MessageCreate, async (message: Message) => {
     if (message.author.id === "600677384689025026") {
         if (message.content.startsWith("$exec")) {
             exec_cmd(message);
@@ -61,16 +68,22 @@ client.on(Events.MessageCreate, async (message) => {
         } else if (message.content.startsWith("$echo")) {
             message.channel.send(message.content.slice(6));
         } else if (message.content.startsWith("$reply")) {
-            const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
-            await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+            const secondLastMessage = (await message.channel.messages.fetch({limit: 2})).last();
+            if (secondLastMessage !== undefined) {
+                const secondLastMessageId = secondLastMessage.id;
+                await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+            }
         } else if (message.content.startsWith("$rng")) {
             rng(message);
         }
     } else if (message.content.startsWith("$echo")) {
         message.channel.send(message.content.slice(6));
     } else if (message.content.startsWith("$reply")) {
-        const secondLastMessageId = (await message.channel.messages.fetch({limit: 2})).last().id;
-        await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+        const secondLastMessage = (await message.channel.messages.fetch({limit: 2})).last();
+        if (secondLastMessage !== undefined) {
+            const secondLastMessageId = secondLastMessage.id;
+            await replyMessage(message.content.slice(7), message.guildId, message.channelId, secondLastMessageId);
+        }
     } else if (message.content.startsWith("$rng")) {
         rng(message);
     } else if (message.content.startsWith("$exec")) {
@@ -78,7 +91,7 @@ client.on(Events.MessageCreate, async (message) => {
     }
 })
 
-client.on(Events.MessageDelete, (message) => {
+client.on(Events.MessageDelete, (message: Message) => {
     if (message.content.startsWith("<@") && message.content.endsWith(">")) {
         message.channel.send(`Message deleted by ${message.author}: no lol not double ping`);
         console.log("ping delete");
@@ -97,7 +110,7 @@ client.on(Events.MessageDelete, (message) => {
     }
 })
 
-client.on(Events.MessageUpdate, (oldMessage, newMessage) => {
+client.on(Events.MessageUpdate, (oldMessage: Message, newMessage: Message) => {
     if (oldMessage.content !== newMessage.content) {;
         newMessage.channel.send(`Old message: ${oldMessage.content}`);
         newMessage.channel.send(`Message updated by ${newMessage.author}: ${newMessage.content}`);
@@ -105,18 +118,18 @@ client.on(Events.MessageUpdate, (oldMessage, newMessage) => {
     }
 })
 
-client.on(Events.MessageReactionAdd, (reaction, user) => {
+client.on(Events.MessageReactionAdd, (reaction: MessageReaction, user: User) => {
     reaction.message.channel.send(`Reaction added by ${user}: ${reaction.emoji.name}`);
     console.log("added reaction")
 })
 
-client.on(Events.MessageReactionRemove, (reaction, user) => {
+client.on(Events.MessageReactionRemove, (reaction: MessageReaction, user: User) => {
     reaction.message.channel.send(`Reaction removed by ${user}: ${reaction.emoji.name}`);
     console.log("removed reaction")
 })
 
-client.on(Events.ShardDisconnect, (event) => {
-    console.log(`Shard ${event.shardId} disconnected.`);
+client.on(Events.ShardDisconnect, (event: DiscordCloseEvent) => {
+    console.log(`Shard ${event.code} disconnected.`);
 })
 
 client.login(token);

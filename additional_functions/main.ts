@@ -1,12 +1,12 @@
-const { token } = require("/com.docker.devenvironments.code/config.json")
+const { TOKEN } = require("/com.docker.devenvironments.code/config.json")
 
-BASE_URL = "https://discord.com/api/v9"
+const BASE_URL = "https://discord.com/api/v9"
 
-async function getWebhook(serverID) {
+async function getWebhook(serverID: number) {
   try {
     const resp = await fetch(`${BASE_URL}/guilds/${serverID}/webhooks`, {
       "headers": {
-        "authorization": token,
+        "authorization": TOKEN,
       },
       "method": "GET",
     });
@@ -21,33 +21,34 @@ async function getWebhook(serverID) {
   }
 };
 
-async function createWebhook(name="Captain Hook", channelID) {
-  try {
-    const resp = await fetch(`${BASE_URL}/channels/${channelID}/webhooks`, {
-      "headers": {
-        "authorization": token,
-      },
-      "body": {
-        "name": name
-      },
-      "method": "POST"
-    });
-    if (!resp.ok) {
-      throw new Error("Network response was not ok while creating webhook");
+async function createWebhook(name: string = "Captain Hook", channelID: number) {
+    try {
+      const resp = await fetch(`${BASE_URL}/channels/${channelID}/webhooks`, {
+        headers: {
+          authorization: TOKEN,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: name
+        }),
+        method: "POST"
+      });
+      if (!resp.ok) {
+        throw new Error("Network response was not ok while creating webhook");
+      }
+      const data = await resp.json();
+      console.log("created webhook successfully");
+      return data;
+    } catch (err) {
+      console.error("Error creating webhook:", err);
     }
-    const data = await resp.json();
-    console.log("created webhook successfully");
-    return data;
-  } catch (err) {
-    console.error("Error creating webhook:", err);
-  }
-};
+};  
 
-async function deleteWebhook(webhookID) {
+async function deleteWebhook(webhookID: number) {
   try {
     const resp = await fetch(`${BASE_URL}/webhooks/${webhookID}`, {
       "headers": {
-        "authorization": token,
+        "authorization": TOKEN,
       },
       "method": "DELETE"
     });
@@ -62,11 +63,11 @@ async function deleteWebhook(webhookID) {
   }
 };
 
-async function sendMessage(channelID, message) {
+async function sendMessage(channelID: number, message: string) {
   try {
     const resp = await fetch(`${BASE_URL}/channels/${channelID}/messages`, {
       "headers": {
-        "authorization": token,
+        "authorization": TOKEN,
         "content-type": "application/json"
       },
       "body": JSON.stringify({
@@ -85,11 +86,11 @@ async function sendMessage(channelID, message) {
   }
 }
 
-async function deleteMessage(messageID, channelID) {
+async function deleteMessage(messageID: number, channelID: number) {
   try {
     const resp = await fetch(`{BASE_URL}/channels/${channelID}/messages/${messageID}`, {
       "headers": {
-        "authorization": token
+        "authorization": TOKEN
       },
       "method": "DELETE"
     });
@@ -104,11 +105,11 @@ async function deleteMessage(messageID, channelID) {
   }
 }
 
-async function createChannel(name, serverID, type=0, parentID=null) {
+async function createChannel(name: string, serverID: number, type=0, parentID=null) {
   try {
     const resp = await fetch(`${BASE_URL}/guilds/${serverID}/channels`, {
       "headers": {
-        "authorization": token,
+        "authorization": TOKEN,
         "content-type": "application/json"
       },
       "body": JSON.stringify({
@@ -129,11 +130,11 @@ async function createChannel(name, serverID, type=0, parentID=null) {
   }
 }
 
-async function deleteChannel(channelID) {
+async function deleteChannel(channelID: number) {
   try {
     const resp = await fetch(`${BASE_URL}/channels/${channelID}`, {
       "headers": {
-        "authorization": token,
+        "authorization": TOKEN,
         "content-type": "application/json"
       },
       "body": null,
