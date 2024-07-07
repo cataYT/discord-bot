@@ -1,8 +1,8 @@
-const { TOKEN } = require("/com.docker.devenvironments.code/config.json")
+import { TOKEN } from "../config.json";
 
-const BASE_URL = "https://discord.com/api/v9"
+const BASE_URL: string = "https://discord.com/api/v9"
 
-async function getWebhook(serverID: number) {
+export async function getWebhook(serverID: number): Promise<string | null> {
   try {
     const resp = await fetch(`${BASE_URL}/guilds/${serverID}/webhooks`, {
       "headers": {
@@ -13,15 +13,15 @@ async function getWebhook(serverID: number) {
     if (!resp.ok) {
       throw new Error("Network response was not ok while getting webhook");
     }
-    const data = await resp.json();
     console.log("got webhook successfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error("Error fetching webhook:", err);
+    return null;
   }
 };
 
-async function createWebhook(name: string = "Captain Hook", channelID: number) {
+export async function createWebhook(name: string = "Captain Hook", channelID: number): Promise<string | null> {
     try {
       const resp = await fetch(`${BASE_URL}/channels/${channelID}/webhooks`, {
         headers: {
@@ -36,15 +36,15 @@ async function createWebhook(name: string = "Captain Hook", channelID: number) {
       if (!resp.ok) {
         throw new Error("Network response was not ok while creating webhook");
       }
-      const data = await resp.json();
       console.log("created webhook successfully");
-      return data;
+      return await resp.json();
     } catch (err) {
       console.error("Error creating webhook:", err);
+      return null;
     }
 };  
 
-async function deleteWebhook(webhookID: number) {
+export async function deleteWebhook(webhookID: number): Promise<string | null> {
   try {
     const resp = await fetch(`${BASE_URL}/webhooks/${webhookID}`, {
       "headers": {
@@ -55,17 +55,17 @@ async function deleteWebhook(webhookID: number) {
     if (!resp.ok) {
       throw new Error("Network response was not ok while deleting webhook");
     }
-    const data = await resp.json();
     console.log("deleted webhook successfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error("Error deleting webhook:", err);
+    return null;
   }
 };
 
-async function sendMessage(channelID: number, message: string) {
+export async function sendMessage(channelID: number, message: string): Promise<string | null> {
   try {
-    const resp = await fetch(`${BASE_URL}/channels/${channelID}/messages`, {
+    const resp: Response = await fetch(`${BASE_URL}/channels/${channelID}/messages`, {
       "headers": {
         "authorization": TOKEN,
         "content-type": "application/json"
@@ -78,17 +78,44 @@ async function sendMessage(channelID: number, message: string) {
     if (!resp.ok) {
       throw new Error("Network response was not ok while sending message");
     }
-    const data = await resp.json();
     console.log("sent message successfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error("Error sending message:", err);
+    return null;
   }
 }
 
-async function deleteMessage(messageID: number, channelID: number) {
+export async function replyMessage(guildID: string, channelID: string, messageID: string, message: string): Promise<string | null> {
   try {
-    const resp = await fetch(`{BASE_URL}/channels/${channelID}/messages/${messageID}`, {
+    const resp: Response = await fetch(`${BASE_URL}channels/${channelID}/messages`, {
+      "headers": {
+        "authorization": TOKEN
+      },
+      "body": JSON.stringify({
+        "message": message,
+        "message_reference": {
+          "guild_id": guildID,
+          "channel_id": channelID,
+          "message_id": messageID
+        }
+      }),
+      "method": "POST"
+    });
+    if (!resp.ok) {
+      throw new Error("Network response was not ok while replying message");
+    }
+    console.log("replied to message successfully");
+    return await resp.json();
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+export async function deleteMessage(messageID: number, channelID: number): Promise<string | null> {
+  try {
+    const resp: Response = await fetch(`${BASE_URL}/channels/${channelID}/messages/${messageID}`, {
       "headers": {
         "authorization": TOKEN
       },
@@ -97,17 +124,17 @@ async function deleteMessage(messageID: number, channelID: number) {
     if (!resp.ok) {
       throw new Error("Network response was not ok while deleting message");
     }
-    const data = await resp.json();
     console.log("deleted message sucessfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error(err);
+    return null;
   }
 }
 
-async function createChannel(name: string, serverID: number, type=0, parentID=null) {
+export async function createChannel(name: string, serverID: number, type=0, parentID=null): Promise<string | null> {
   try {
-    const resp = await fetch(`${BASE_URL}/guilds/${serverID}/channels`, {
+    const resp: Response = await fetch(`${BASE_URL}/guilds/${serverID}/channels`, {
       "headers": {
         "authorization": TOKEN,
         "content-type": "application/json"
@@ -122,17 +149,17 @@ async function createChannel(name: string, serverID: number, type=0, parentID=nu
     if (!resp.ok) {
       throw new Error("response not ok");
     }
-    const data = await resp.json();
     console.log("created channel successfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error(err);
+    return null;
   }
 }
 
-async function deleteChannel(channelID: number) {
+export async function deleteChannel(channelID: string): Promise<string | null> {
   try {
-    const resp = await fetch(`${BASE_URL}/channels/${channelID}`, {
+    const resp: Response = await fetch(`${BASE_URL}/channels/${channelID}`, {
       "headers": {
         "authorization": TOKEN,
         "content-type": "application/json"
@@ -143,11 +170,11 @@ async function deleteChannel(channelID: number) {
     if (!resp.ok) {
       throw new Error("Network response was not ok while deleting channel");
     }
-    const data = await resp.json();
     console.log("deleted channel successfully");
-    return data;
+    return await resp.json();
   } catch (err) {
     console.error(err);
+    return null;
   }
 }
 
@@ -156,6 +183,7 @@ module.exports = {
   createWebhook,
   deleteWebhook,
   sendMessage,
+  replyMessage,
   deleteMessage,
   createChannel,
   deleteChannel
